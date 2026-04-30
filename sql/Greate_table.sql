@@ -14,7 +14,8 @@ CREATE TABLE склады (
 CREATE TABLE должности (
     id_должности SERIAL PRIMARY KEY,
     название VARCHAR(50) NOT NULL UNIQUE,
-    оклад DECIMAL(10,2) CHECK (оклад > 0)
+    оклад DECIMAL(10,2) CHECK (оклад > 0),
+    обязанности VARCHAR(150)
 );
 
 -- =====================================================
