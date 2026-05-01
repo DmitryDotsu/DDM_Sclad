@@ -74,36 +74,48 @@ namespace DDM_Sclad
             this.btnAddHeader.Text = "Добавить";
             this.btnAddHeader.Location = new System.Drawing.Point(6, 208);
             this.btnAddHeader.Size = new System.Drawing.Size(90, 30);
+            this.btnAddHeader.Click += new System.EventHandler(this.btnAddHeader_Click);  
+
             // 
             // btnEditHeader
             // 
             this.btnEditHeader.Text = "Изменить";
             this.btnEditHeader.Location = new System.Drawing.Point(102, 208);
             this.btnEditHeader.Size = new System.Drawing.Size(90, 30);
+            this.btnEditHeader.Click += new System.EventHandler(this.btnEditHeader_Click);   
+
             // 
             // btnDeleteHeader
             // 
             this.btnDeleteHeader.Text = "Удалить";
             this.btnDeleteHeader.Location = new System.Drawing.Point(198, 208);
             this.btnDeleteHeader.Size = new System.Drawing.Size(90, 30);
+            this.btnDeleteHeader.Click += new System.EventHandler(this.btnDeleteHeader_Click);   
+
             // 
             // btnAddDetail
             // 
             this.btnAddDetail.Text = "Добавить";
             this.btnAddDetail.Location = new System.Drawing.Point(6, 208);
             this.btnAddDetail.Size = new System.Drawing.Size(90, 30);
+            this.btnAddDetail.Click += new System.EventHandler(this.btnAddDetail_Click);
+
             // 
             // btnEditDetail
             // 
             this.btnEditDetail.Text = "Изменить";
             this.btnEditDetail.Location = new System.Drawing.Point(102, 208);
             this.btnEditDetail.Size = new System.Drawing.Size(90, 30);
+            this.btnEditDetail.Click += new System.EventHandler(this.btnEditDetail_Click);   
+
             // 
             // btnDeleteDetail
             // 
             this.btnDeleteDetail.Text = "Удалить";
             this.btnDeleteDetail.Location = new System.Drawing.Point(198, 208);
             this.btnDeleteDetail.Size = new System.Drawing.Size(90, 30);
+            this.btnDeleteDetail.Click += new System.EventHandler(this.btnDeleteDetail_Click);   
+
             // 
             // btnRefresh
             // 
@@ -139,6 +151,10 @@ namespace DDM_Sclad
             this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
+
+            //клики по тч
+            this.dgvHeaders.SelectionChanged += new System.EventHandler(this.dgvHeaders_SelectionChanged);
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
         }
 
         private System.Windows.Forms.DataGridView dgvHeaders;

@@ -32,7 +32,22 @@ namespace DDM_Sclad
                 }
             }
         }
-
+        public static bool IsAvailable()
+        {
+            try
+            {
+                using (var conn = GetConnection())
+                {
+                    conn.Open();
+                    conn.Close();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
         public static int ExecuteNonQuery(string query, NpgsqlParameter[] parameters = null)
         {
             using (var conn = GetConnection())

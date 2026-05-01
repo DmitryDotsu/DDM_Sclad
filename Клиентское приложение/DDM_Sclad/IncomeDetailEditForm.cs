@@ -34,8 +34,11 @@ namespace DDM_Sclad
         {
             if (editingRow != null)
             {
-                txtPrice.Text = editingRow["цена"].ToString();
-                txtQuantity.Text = editingRow["количество"].ToString();
+                if (editingRow["цена"] != DBNull.Value)
+                    txtPrice.Text = editingRow["цена"].ToString();
+
+                if (editingRow["количество"] != DBNull.Value)
+                    txtQuantity.Text = editingRow["количество"].ToString();
             }
         }
 

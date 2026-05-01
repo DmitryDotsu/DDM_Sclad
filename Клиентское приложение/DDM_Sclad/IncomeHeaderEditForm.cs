@@ -37,8 +37,11 @@ namespace DDM_Sclad
         {
             if (editingRow != null)
             {
-                txtNumber.Text = editingRow["Номер"].ToString();
-                dtDate.Value = Convert.ToDateTime(editingRow["Дата"]);
+                if (editingRow["Номер"] != DBNull.Value)
+                    txtNumber.Text = editingRow["Номер"].ToString();
+
+                if (editingRow["Дата"] != DBNull.Value)
+                    dtDate.Value = Convert.ToDateTime(editingRow["Дата"]);
             }
         }
 

@@ -79,7 +79,7 @@
             this.btnIncomeDoc.Name = "btnIncomeDoc";
             this.btnIncomeDoc.Size = new System.Drawing.Size(200, 40);
             this.btnIncomeDoc.TabIndex = 6;
-            this.btnIncomeDoc.Text = "Приход товара (1:М)";
+            this.btnIncomeDoc.Text = "Приход товара";
             this.btnIncomeDoc.Click += new System.EventHandler(this.btnIncomeDoc_Click);
             // 
             // btnExpenseDoc

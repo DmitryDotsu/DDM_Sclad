@@ -16,6 +16,9 @@ namespace DDM_Sclad
         public IncomeDocForm()
         {
             InitializeComponent();
+            // Отключаем добавление строк в гридах
+            dgvHeaders.AllowUserToAddRows = false;
+            dgvDetails.AllowUserToAddRows = false;
             LoadData();
         }
 
@@ -35,32 +38,39 @@ namespace DDM_Sclad
         }
 
         private void LoadDetails()
-        {
-            if (currentHeaderId == -1)
-            {
-                detailTable = null;
-                dgvDetails.DataSource = null;
-                return;
-            }
-
-            string detailQuery = @"SELECT тч.id_записи AS Код, т.название AS Товар, 
-                                          тч.цена, тч.количество, тч.сумма
-                                   FROM ТЧ_накладная_прихода тч
-                                   JOIN товары т ON тч.id_товара = т.id_товара
-                                   WHERE тч.id_прихода = @id";
-
-            detailTable = DatabaseHelper.ExecuteQuery(detailQuery,
-                new[] { new NpgsqlParameter("@id", currentHeaderId) });
-            detailSource = new BindingSource { DataSource = detailTable };
-            dgvDetails.DataSource = detailSource;
-        }
+{
+    if (currentHeaderId == -1)
+    {
+        detailTable = null;
+        dgvDetails.DataSource = null;
+        return;
+    }
+    
+    string detailQuery = @"SELECT тч.id_записи AS Код, т.название AS Товар, 
+                                  тч.цена, тч.количество, тч.сумма
+                           FROM ТЧ_накладная_прихода тч
+                           JOIN товары т ON тч.id_товара = т.id_товара
+                           WHERE тч.id_прихода = @id";
+    
+    detailTable = DatabaseHelper.ExecuteQuery(detailQuery, 
+        new[] { new NpgsqlParameter("@id", currentHeaderId) });
+    detailSource = new BindingSource { DataSource = detailTable };
+    dgvDetails.DataSource = detailSource;
+    
+    // Отключаем добавление строк в гриде
+    dgvDetails.AllowUserToAddRows = false;
+}
 
         private void dgvHeaders_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvHeaders.SelectedRows.Count > 0)
+            if (dgvHeaders.SelectedRows.Count > 0 && dgvHeaders.SelectedRows[0].DataBoundItem != null)
             {
-                currentHeaderId = Convert.ToInt32(dgvHeaders.SelectedRows[0].Cells["Код"].Value);
-                LoadDetails();
+                DataRowView rowView = (DataRowView)dgvHeaders.SelectedRows[0].DataBoundItem;
+                if (rowView != null && rowView["Код"] != DBNull.Value)
+                {
+                    currentHeaderId = Convert.ToInt32(rowView["Код"]);
+                    LoadDetails();
+                }
             }
         }
 
@@ -74,7 +84,10 @@ namespace DDM_Sclad
         private void btnEditHeader_Click(object sender, EventArgs e)
         {
             if (dgvHeaders.SelectedRows.Count == 0) return;
-            DataRowView rowView = (DataRowView)headerSource.Current;
+
+            DataRowView rowView = (DataRowView)dgvHeaders.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
             var form = new IncomeHeaderEditForm(rowView.Row);
             if (form.ShowDialog() == DialogResult.OK)
                 LoadData();
@@ -83,10 +96,14 @@ namespace DDM_Sclad
         private void btnDeleteHeader_Click(object sender, EventArgs e)
         {
             if (dgvHeaders.SelectedRows.Count == 0) return;
+
+            DataRowView rowView = (DataRowView)dgvHeaders.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
             if (MessageBox.Show("Удалить документ и все его строки?", "Подтверждение",
                 MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                int id = Convert.ToInt32(dgvHeaders.SelectedRows[0].Cells["Код"].Value);
+                int id = Convert.ToInt32(rowView["Код"]);
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM приход_товара WHERE id_прихода = @id",
                     new[] { new NpgsqlParameter("@id", id) });
                 LoadData();
@@ -110,7 +127,10 @@ namespace DDM_Sclad
         private void btnEditDetail_Click(object sender, EventArgs e)
         {
             if (dgvDetails.SelectedRows.Count == 0) return;
-            DataRowView rowView = (DataRowView)detailSource.Current;
+
+            DataRowView rowView = (DataRowView)dgvDetails.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
             var form = new IncomeDetailEditForm(currentHeaderId, rowView.Row);
             if (form.ShowDialog() == DialogResult.OK)
                 LoadDetails();
@@ -119,10 +139,14 @@ namespace DDM_Sclad
         private void btnDeleteDetail_Click(object sender, EventArgs e)
         {
             if (dgvDetails.SelectedRows.Count == 0) return;
+
+            DataRowView rowView = (DataRowView)dgvDetails.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
             if (MessageBox.Show("Удалить строку?", "Подтверждение",
                 MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                int id = Convert.ToInt32(dgvDetails.SelectedRows[0].Cells["Код"].Value);
+                int id = Convert.ToInt32(rowView["Код"]);
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM ТЧ_накладная_прихода WHERE id_записи = @id",
                     new[] { new NpgsqlParameter("@id", id) });
                 LoadDetails();

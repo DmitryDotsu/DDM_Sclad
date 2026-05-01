@@ -141,6 +141,13 @@ namespace DDM_Sclad
         {
             try
             {
+
+                if (!DatabaseHelper.IsAvailable())
+                {
+                    MessageBox.Show("Нет подключения к базе данных", "Ошибка",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
                 string query = "";
 
                 if (reportType == "stock")
@@ -194,18 +201,33 @@ namespace DDM_Sclad
                     var sortType = ((dynamic)controls).cboSort.SelectedIndex;
 
                     query = @"
-                        SELECT т.название AS Товар,
-                               SUM(тчр.количество) AS Количество_проданных,
-                               SUM(тчр.сумма) AS Выручка,
-                               SUM(тчп.сумма) / NULLIF(SUM(тчп.количество), 0) AS Средняя_цена_закупа,
-                               SUM(тчр.сумма) - (SUM(тчр.количество) * (SUM(тчп.сумма) / NULLIF(SUM(тчп.количество), 0))) AS Прибыль
+                        SELECT 
+                        т.название AS Товар,
+                        COALESCE(SUM(тчр.количество), 0) AS Количество_проданных,
+                        COALESCE(SUM(тчр.сумма), 0) AS Выручка,
+                         ROUND(
+                         CASE 
+                         WHEN COALESCE(SUM(тчп.количество), 0) = 0 THEN 0
+                          ELSE COALESCE(SUM(тчп.сумма), 0) / COALESCE(SUM(тчп.количество), 0)
+                          END, 2
+                        ) AS Средняя_цена_закупа,
+                         ROUND(
+                        COALESCE(SUM(тчр.сумма), 0) - 
+                        (COALESCE(SUM(тчр.количество), 0) * 
+                        CASE 
+                            WHEN COALESCE(SUM(тчп.количество), 0) = 0 THEN 0
+                            ELSE COALESCE(SUM(тчп.сумма), 0) / COALESCE(SUM(тчп.количество), 0)
+                        END
+                          ), 2
+                         ) AS Прибыль
                         FROM товары т
-                        JOIN ТЧ_накладная_расхода тчр ON т.id_товара = тчр.id_товара
-                        JOIN расход_товара рд on тчр.id_расхода = рд.id_расхода
-                        LEFT JOIN ТЧ_накладная_прихода тчп ON т.id_товара = тчп.id_товара
-                        LEFT JOIN приход_товара пд ON тчп.id_прихода = пд.id_прихода
-                        WHERE рд.дата_расхода BETWEEN @dateFrom AND @dateTo
-                        GROUP BY т.id_товара, т.название";
+                         LEFT JOIN ТЧ_накладная_расхода тчр ON т.id_товара = тчр.id_товара
+                         LEFT JOIN расход_товара рд ON тчр.id_расхода = рд.id_расхода
+                          LEFT JOIN ТЧ_накладная_прихода тчп ON т.id_товара = тчп.id_товара
+                          LEFT JOIN приход_товара пд ON тчп.id_прихода = пд.id_прихода
+                          WHERE (рд.дата_расхода BETWEEN @dateFrom AND @dateTo OR рд.дата_расхода IS NULL)
+                           GROUP BY т.id_товара, т.название
+                           HAVING COALESCE(SUM(тчр.количество), 0) > 0";
 
                     if (sortType == 1) query += " ORDER BY Прибыль ASC";
                     else if (sortType == 2) query += " ORDER BY Прибыль DESC";
@@ -213,17 +235,29 @@ namespace DDM_Sclad
 
                     var dt = DatabaseHelper.ExecuteQuery(query, new[] {
                         new NpgsqlParameter("@dateFrom", dateFrom),
-                        new NpgsqlParameter("@dateTo", dateTo)
+                      new NpgsqlParameter("@dateTo", dateTo)
                     });
 
                     // Добавляем итоговые данные
-                    decimal totalRevenue = 0, totalProfit = 0;
+                    decimal totalRevenue = 0;
+                    decimal totalProfit = 0;
+                    long totalQuantity = 0;
+
                     foreach (DataRow row in dt.Rows)
                     {
-                        totalRevenue += Convert.ToDecimal(row["Выручка"]);
-                        totalProfit += Convert.ToDecimal(row["Прибыль"]);
+                        totalRevenue += row["Выручка"] != DBNull.Value ? Convert.ToDecimal(row["Выручка"]) : 0;
+                        totalProfit += row["Прибыль"] != DBNull.Value ? Convert.ToDecimal(row["Прибыль"]) : 0;
+                        totalQuantity += row["Количество_проданных"] != DBNull.Value ? Convert.ToInt64(row["Количество_проданных"]) : 0;
                     }
-                    dt.Rows.Add(new object[] { "ИТОГО:", "", totalRevenue, "", totalProfit });
+
+                    // Добавляем итоговую строку
+                    DataRow summaryRow = dt.NewRow();
+                    summaryRow["Товар"] = "ИТОГО:";
+                    summaryRow["Количество_проданных"] = totalQuantity;
+                    summaryRow["Выручка"] = Math.Round(totalRevenue, 2);
+                    summaryRow["Средняя_цена_закупа"] = 0;
+                    summaryRow["Прибыль"] = Math.Round(totalProfit, 2);
+                    dt.Rows.Add(summaryRow);
 
                     dgvReport.DataSource = dt;
                 }

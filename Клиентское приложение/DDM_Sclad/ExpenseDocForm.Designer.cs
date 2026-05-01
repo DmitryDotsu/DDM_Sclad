@@ -60,6 +60,7 @@
             this.dgvHeaders.Size = new System.Drawing.Size(788, 180);
             this.dgvHeaders.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvHeaders.MultiSelect = false;
+            this.dgvHeaders.SelectionChanged += new System.EventHandler(this.dgvHeaders_SelectionChanged);
             // 
             // dgvDetails
             // 
@@ -137,7 +138,7 @@
             this.Controls.Add(this.lblDetail);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.groupBox2);
-            this.Text = "Расход товара (документ + строки)";
+            this.Text = "Расход товара";
             ((System.ComponentModel.ISupportInitialize)(this.dgvHeaders)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvDetails)).EndInit();
             this.groupBox1.ResumeLayout(false);

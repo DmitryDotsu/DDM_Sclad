@@ -89,6 +89,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExpenseDetailEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ExpenseHeaderEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="DatabaseConfig.cs" />
     <Compile Include="DynamicEditRecordForm.cs">
       <SubType>Form</SubType>

@@ -16,6 +16,8 @@ namespace DDM_Sclad
         public ExpenseDocForm()
         {
             InitializeComponent();
+            dgvHeaders.AllowUserToAddRows = false;
+            dgvDetails.AllowUserToAddRows = false;
             LoadData();
         }
 
@@ -57,31 +59,57 @@ namespace DDM_Sclad
 
         private void dgvHeaders_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvHeaders.SelectedRows.Count > 0)
+            if (dgvHeaders.SelectedRows.Count > 0 && dgvHeaders.SelectedRows[0].DataBoundItem != null)
             {
-                currentHeaderId = Convert.ToInt32(dgvHeaders.SelectedRows[0].Cells["Код"].Value);
-                LoadDetails();
+                DataRowView rowView = (DataRowView)dgvHeaders.SelectedRows[0].DataBoundItem;
+                if (rowView != null && rowView["Код"] != DBNull.Value)
+                {
+                    currentHeaderId = Convert.ToInt32(rowView["Код"]);
+                    LoadDetails();
+                }
             }
         }
 
         private void btnAddHeader_Click(object sender, EventArgs e)
         {
-            // Создайте форму редактирования шапки расхода
-            MessageBox.Show("Функция добавления документа расхода");
+            var form = new ExpenseHeaderEditForm(null);
+            if (form.ShowDialog() == DialogResult.OK)
+                LoadData();
         }
 
         private void btnEditHeader_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Функция редактирования документа расхода");
+            if (dgvHeaders.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Выберите документ для редактирования", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DataRowView rowView = (DataRowView)dgvHeaders.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
+            var form = new ExpenseHeaderEditForm(rowView.Row);
+            if (form.ShowDialog() == DialogResult.OK)
+                LoadData();
         }
 
         private void btnDeleteHeader_Click(object sender, EventArgs e)
         {
-            if (dgvHeaders.SelectedRows.Count == 0) return;
-            if (MessageBox.Show("Удалить документ и все его строки?", "Подтверждение",
-                MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (dgvHeaders.SelectedRows.Count == 0)
             {
-                int id = Convert.ToInt32(dgvHeaders.SelectedRows[0].Cells["Код"].Value);
+                MessageBox.Show("Выберите документ для удаления", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DataRowView rowView = (DataRowView)dgvHeaders.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
+            if (MessageBox.Show("Удалить документ и все его строки?", "Подтверждение",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                int id = Convert.ToInt32(rowView["Код"]);
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM расход_товара WHERE id_расхода = @id",
                     new[] { new NpgsqlParameter("@id", id) });
                 LoadData();
@@ -95,28 +123,53 @@ namespace DDM_Sclad
             LoadData();
             if (currentHeaderId != -1) LoadDetails();
         }
+
         private void btnAddDetail_Click(object sender, EventArgs e)
         {
             if (currentHeaderId == -1)
             {
-                MessageBox.Show("Сначала выберите документ");
+                MessageBox.Show("Сначала выберите документ", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            MessageBox.Show("Функция добавления строки расхода");
+            var form = new ExpenseDetailEditForm(currentHeaderId, null);
+            if (form.ShowDialog() == DialogResult.OK)
+                LoadDetails();
         }
 
         private void btnEditDetail_Click(object sender, EventArgs e)
         {
-            if (dgvDetails.SelectedRows.Count == 0) return;
-            MessageBox.Show("Функция редактирования строки расхода");
+            if (dgvDetails.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Выберите строку для редактирования", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DataRowView rowView = (DataRowView)dgvDetails.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
+            var form = new ExpenseDetailEditForm(currentHeaderId, rowView.Row);
+            if (form.ShowDialog() == DialogResult.OK)
+                LoadDetails();
         }
 
         private void btnDeleteDetail_Click(object sender, EventArgs e)
         {
-            if (dgvDetails.SelectedRows.Count == 0) return;
-            if (MessageBox.Show("Удалить строку?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (dgvDetails.SelectedRows.Count == 0)
             {
-                int id = Convert.ToInt32(dgvDetails.SelectedRows[0].Cells["Код"].Value);
+                MessageBox.Show("Выберите строку для удаления", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DataRowView rowView = (DataRowView)dgvDetails.SelectedRows[0].DataBoundItem;
+            if (rowView == null || rowView["Код"] == DBNull.Value) return;
+
+            if (MessageBox.Show("Удалить строку?", "Подтверждение",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                int id = Convert.ToInt32(rowView["Код"]);
                 DatabaseHelper.ExecuteNonQuery("DELETE FROM ТЧ_накладная_расхода WHERE id_записи = @id",
                     new[] { new NpgsqlParameter("@id", id) });
                 LoadDetails();
