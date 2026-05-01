@@ -30,3 +30,7 @@ ALTER TABLE контрагенты ALTER COLUMN email DROP NOT NULL;
 
 -- 2. Удаляем ограничение CHECK, которое требует, чтобы была хотя бы одна галочка
 ALTER TABLE контрагенты DROP CONSTRAINT IF EXISTS контрагенты_check;
+
+--свяжем зав склада по id персонала
+ALTER TABLE склады ADD COLUMN id_завсклада INTEGER REFERENCES персонал(id_сотрудника);
+ALTER TABLE склады DROP COLUMN завсклад;
